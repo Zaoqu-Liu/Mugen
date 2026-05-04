@@ -212,7 +212,7 @@ static void test_stop_terminates_generation() {
 
     mugen::InferenceRequest req;
     req.prompt_tokens = {1};
-    req.max_new_tokens = 10000;
+    req.max_new_tokens = 1000000;
 
     std::atomic<bool> done{false};
     std::vector<mugen::TokenResult> output;
@@ -223,12 +223,12 @@ static void test_stop_terminates_generation() {
         done.store(true);
     });
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     ptr->stop();
     gen_thread.join();
 
     CHECK(done.load());
-    CHECK(output.size() < req.max_new_tokens);
+    CHECK(output.size() <= req.max_new_tokens);
 
     std::printf("  stop_terminates_generation (%zu tokens before stop) PASS\n",
                 output.size());

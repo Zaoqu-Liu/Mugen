@@ -1,0 +1,21 @@
+# Default owner for everything
+* @Zaoqu-Liu
+
+# Core engine
+/src/core/ @Zaoqu-Liu
+/src/metal/ @Zaoqu-Liu
+/src/model/ @Zaoqu-Liu
+/src/server/ @Zaoqu-Liu
+/src/cli/ @Zaoqu-Liu
+
+# Build system
+/CMakeLists.txt @Zaoqu-Liu
+/src/CMakeLists.txt @Zaoqu-Liu
+
+# Documentation
+/docs/ @Zaoqu-Liu
+/README.md @Zaoqu-Liu
+
+# Tests and benchmarks
+/tests/ @Zaoqu-Liu
+/bench/ @Zaoqu-Liu

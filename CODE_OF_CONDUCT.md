@@ -28,7 +28,18 @@ Examples of unacceptable behavior:
 
 Community leaders are responsible for clarifying and enforcing our standards of acceptable behavior and will take appropriate and fair corrective action in response to any behavior that they deem inappropriate, threatening, offensive, or harmful.
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to:
+
+**Zaoqu Liu** — [liuzaoqu@163.com](mailto:liuzaoqu@163.com)
+
+All complaints will be reviewed and investigated promptly and fairly. All community leaders are obligated to respect the privacy and security of the reporter.
+
+## Enforcement Guidelines
+
+1. **Correction** — A private written warning with clarity around the nature of the violation.
+2. **Warning** — A warning with consequences for continued behavior.
+3. **Temporary Ban** — A temporary ban from any sort of interaction or public communication with the community.
+4. **Permanent Ban** — A permanent ban from any sort of public interaction within the community.
 
 ## Attribution
 
