@@ -1,0 +1,94 @@
+# ──────────────────────────────────────────────────────────────
+# Release — build, test, and publish on version tags (v*)
+# Creates a GitHub Release with binaries and changelog excerpt.
+# ──────────────────────────────────────────────────────────────
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write          # needed to create releases
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history for changelog extraction
+
+      # ── Build ────────────────────────────────────────────────
+      - name: Configure
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DMUGEN_BUILD_TESTS=ON \
+            -DMUGEN_BUILD_BENCH=OFF
+
+      - name: Build
+        run: cmake --build build -j$(sysctl -n hw.ncpu)
+
+      # ── Test ─────────────────────────────────────────────────
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      # ── Package binaries ─────────────────────────────────────
+      - name: Collect artifacts
+        id: artifacts
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          STAGE="mugen-${TAG}-macos-arm64"
+          mkdir -p "${STAGE}"
+
+          # Copy known binaries (fail gracefully if one doesn't exist)
+          for bin in mugen-cli mugen-server; do
+            SRC=$(find build -name "$bin" -type f | head -1)
+            if [ -n "$SRC" ]; then
+              cp "$SRC" "${STAGE}/"
+            else
+              echo "::warning::Binary $bin not found — skipping."
+            fi
+          done
+
+          tar czf "${STAGE}.tar.gz" "${STAGE}"
+          echo "archive=${STAGE}.tar.gz" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      # ── Extract release notes from CHANGELOG.md ──────────────
+      - name: Extract release notes
+        id: notes
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+
+          # Grab everything between this version header and the next
+          NOTES=$(awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) exit
+              if (index($0, ver)) { found=1; next }
+            }
+            found { print }
+          ' CHANGELOG.md)
+
+          if [ -z "$NOTES" ]; then
+            NOTES="Release ${TAG} — see CHANGELOG.md for details."
+          fi
+
+          # Write to file (multi-line safe)
+          echo "$NOTES" > /tmp/release-notes.md
+
+      # ── Create GitHub Release ────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Mugen ${{ steps.artifacts.outputs.tag }}
+          body_path: /tmp/release-notes.md
+          files: ${{ steps.artifacts.outputs.archive }}
+          draft: false
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}

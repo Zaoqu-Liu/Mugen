@@ -1,0 +1,57 @@
+# ──────────────────────────────────────────────────────────────
+# Format Check — enforce clang-format on every PR
+# Uses the .clang-format config at the repository root.
+# ──────────────────────────────────────────────────────────────
+name: Format Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.cpp'
+      - '**.h'
+      - '**.mm'
+      - '.clang-format'
+
+jobs:
+  clang-format:
+    name: clang-format
+    runs-on: macos-15
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check clang-format version
+        run: clang-format --version
+
+      - name: Run clang-format check
+        run: |
+          # Collect all source files
+          FILES=$(find . \
+            -type f \( -name '*.cpp' -o -name '*.h' -o -name '*.mm' \) \
+            -not -path './build/*' \
+            -not -path './.git/*' \
+            | sort)
+
+          if [ -z "$FILES" ]; then
+            echo "No source files found — skipping."
+            exit 0
+          fi
+
+          echo "Checking $(echo "$FILES" | wc -l | tr -d ' ') files..."
+
+          # --dry-run + --Werror: exits non-zero on any formatting diff
+          echo "$FILES" | xargs clang-format --dry-run --Werror 2> >(tee /tmp/fmt-errors.txt >&2) \
+            && echo "✅ All files are formatted correctly." \
+            || {
+              echo ""
+              echo "──────────────────────────────────────────────────"
+              echo "❌  clang-format found formatting issues."
+              echo ""
+              echo "To fix locally, run:"
+              echo "  find . -type f \\( -name '*.cpp' -o -name '*.h' -o -name '*.mm' \\) \\"
+              echo "    -not -path './build/*' | xargs clang-format -i"
+              echo "──────────────────────────────────────────────────"
+              exit 1
+            }
