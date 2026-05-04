@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Building Issues / FAQ
+    url: https://github.com/Zaoqu-Liu/Mugen/blob/main/docs/BUILDING.md
+    about: Check the build guide and FAQ before opening an issue.
+  - name: Questions & Discussions
+    url: https://github.com/Zaoqu-Liu/Mugen/discussions
+    about: Ask questions and share ideas in GitHub Discussions.

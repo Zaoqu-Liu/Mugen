@@ -8,17 +8,36 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in Mugen, please report it privately rather than opening a public issue.
-
 **Do not open a public issue for security vulnerabilities.**
 
-Please send a detailed report including:
+Report security issues via:
+
+- **Email:** [liuzaoqu@163.com](mailto:liuzaoqu@163.com) (subject: `[Mugen Security]`)
+- **GitHub Security Advisories:** [Report here](https://github.com/Zaoqu-Liu/Mugen/security/advisories/new)
+
+### Response Timeline
+
+| Stage | Timeframe |
+|---|---|
+| Acknowledgment | Within 48 hours |
+| Initial assessment | Within 7 days |
+| Fix or mitigation | Within 90 days |
+
+We will coordinate disclosure timing with you. Credit will be given in the release notes unless you prefer anonymity.
+
+### What to Include
+
 - Description of the vulnerability
 - Steps to reproduce
 - Affected versions
-- Potential impact
+- Potential impact assessment
 
-We aim to acknowledge reports within 48 hours and provide an initial assessment within one week.
+## Security Release Process
+
+1. Vulnerability confirmed and fix developed privately
+2. CVE assigned (if applicable)
+3. Patch release published with advisory
+4. Public disclosure after users have had time to update
 
 ## Security Model
 

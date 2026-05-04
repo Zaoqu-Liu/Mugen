@@ -4,7 +4,8 @@ cmake-build-*/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
-Makefile
+**/Makefile
+!/Makefile
 compile_commands.json
 
 # Compiled objects
