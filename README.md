@@ -1,7 +1,15 @@
 # Mugen (無限)
 
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="Mugen Banner" width="800">
+</p>
+
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Build](https://github.com/Zaoqu-Liu/Mugen/actions/workflows/build.yml/badge.svg)](https://github.com/Zaoqu-Liu/Mugen/actions)
+[![Release](https://img.shields.io/github/v/release/Zaoqu-Liu/Mugen)](https://github.com/Zaoqu-Liu/Mugen/releases)
+[![Stars](https://img.shields.io/github/stars/Zaoqu-Liu/Mugen)](https://github.com/Zaoqu-Liu/Mugen/stargazers)
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue?logo=apple)](https://www.apple.com/macos/)
+[![Metal 3](https://img.shields.io/badge/Metal-3.0-purple?logo=apple)](https://developer.apple.com/metal/)
 [![Platform](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-orange)](https://www.apple.com/mac/)
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 

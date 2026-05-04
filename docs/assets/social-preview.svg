@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a1a"/>
+      <stop offset="40%" stop-color="#12122a"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <linearGradient id="sp-icon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a3f8f"/>
+      <stop offset="50%" stop-color="#6c5ce7"/>
+      <stop offset="100%" stop-color="#a29bfe"/>
+    </linearGradient>
+    <linearGradient id="sp-text" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e0e0f0"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="42%" r="40%">
+      <stop offset="0%" stop-color="#6c5ce7" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#6c5ce7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="line-fade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6c5ce7" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#6c5ce7" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#6c5ce7" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="640" fill="url(#bg-grad)"/>
+
+  <!-- Ambient glow behind logo -->
+  <rect width="1280" height="640" fill="url(#glow)"/>
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.04" stroke="#6c5ce7" stroke-width="0.5">
+    <line x1="0" y1="160" x2="1280" y2="160"/>
+    <line x1="0" y1="320" x2="1280" y2="320"/>
+    <line x1="0" y1="480" x2="1280" y2="480"/>
+    <line x1="320" y1="0" x2="320" y2="640"/>
+    <line x1="640" y1="0" x2="640" y2="640"/>
+    <line x1="960" y1="0" x2="960" y2="640"/>
+  </g>
+
+  <!-- ===== INFINITY-CHIP ICON (centered, larger) ===== -->
+  <g transform="translate(640, 220) scale(3.2)">
+    <!-- Infinity lemniscate -->
+    <path d="M0,-1 C12,-22 34,-22 34,-1 C34,20 12,22 0,1 C-12,22 -34,20 -34,-1 C-34,-22 -12,-22 0,-1Z"
+          fill="none" stroke="url(#sp-icon)" stroke-width="3" stroke-linejoin="round"/>
+
+    <!-- Central chip die -->
+    <rect x="-6" y="-6" width="12" height="12" rx="2" fill="url(#sp-icon)"/>
+    <rect x="-3.5" y="-3.5" width="7" height="7" rx="1" fill="none" stroke="#a29bfe" stroke-width="0.5" opacity="0.7"/>
+
+    <!-- Circuit traces -->
+    <line x1="6" y1="-2" x2="16" y2="-8" stroke="#6c5ce7" stroke-width="0.8" opacity="0.6"/>
+    <line x1="6" y1="2" x2="16" y2="8" stroke="#6c5ce7" stroke-width="0.8" opacity="0.6"/>
+    <line x1="-6" y1="-2" x2="-16" y2="-8" stroke="#6c5ce7" stroke-width="0.8" opacity="0.6"/>
+    <line x1="-6" y1="2" x2="-16" y2="8" stroke="#6c5ce7" stroke-width="0.8" opacity="0.6"/>
+
+    <!-- Connection nodes -->
+    <circle cx="18" cy="-10" r="1.8" fill="#a29bfe"/>
+    <circle cx="18" cy="10" r="1.8" fill="#a29bfe"/>
+    <circle cx="-18" cy="-10" r="1.8" fill="#a29bfe"/>
+    <circle cx="-18" cy="10" r="1.8" fill="#a29bfe"/>
+    <circle cx="30" cy="-4" r="1.2" fill="#6c5ce7" opacity="0.7"/>
+    <circle cx="30" cy="4" r="1.2" fill="#6c5ce7" opacity="0.7"/>
+    <circle cx="-30" cy="-4" r="1.2" fill="#6c5ce7" opacity="0.7"/>
+    <circle cx="-30" cy="4" r="1.2" fill="#6c5ce7" opacity="0.7"/>
+  </g>
+
+  <!-- ===== MUGEN WORDMARK ===== -->
+  <g fill="url(#sp-text)" transform="translate(640, 330) scale(1)">
+    <!-- M -->
+    <path d="M-82,0 L-82,42 L-79,42 L-79,8 L-70,28 L-68,28 L-59,8 L-59,42 L-56,42 L-56,0 L-59,0 L-69,22 L-79,0 Z" transform="translate(0,0)"/>
+    <!-- U -->
+    <path d="M-48,0 L-48,30 C-48,37 -44,42.5 -37,42.5 C-30,42.5 -26,37 -26,30 L-26,0 L-29,0 L-29,30 C-29,35.5 -32,39.5 -37,39.5 C-42,39.5 -45,35.5 -45,30 L-45,0 Z"/>
+    <!-- G -->
+    <path d="M-6,8 C-8.5,3 -13,0 -18,0 C-24,0 -28,5 -28,14 L-28,28 C-28,37 -24,42.5 -18,42.5 C-13,42.5 -8,39.5 -6,35 L-6,22 L-16,22 L-16,25 L-9,25 L-9,34 C-10.5,37.5 -14,39.5 -18,39.5 C-22,39.5 -25,36 -25,28 L-25,14.5 C-25,7 -22.5,3 -18,3 C-14,3 -10.5,5 -8.5,9 Z"/>
+    <!-- E -->
+    <path d="M2,0 L2,42 L22,42 L22,39 L5,39 L5,22.5 L19,22.5 L19,19.5 L5,19.5 L5,3 L22,3 L22,0 Z"/>
+    <!-- N -->
+    <path d="M28,42 L28,0 L31,0 L52,35 L52,0 L55,0 L55,42 L52,42 L31,7 L31,42 Z"/>
+  </g>
+
+  <!-- Divider line -->
+  <rect x="240" y="395" width="800" height="1" fill="url(#line-fade)"/>
+
+  <!-- Subtitle -->
+  <text x="640" y="430" text-anchor="middle" fill="#a29bfe"
+        font-family="Helvetica Neue,Helvetica,Arial,sans-serif" font-size="24" font-weight="400" letter-spacing="2">
+    MoE Extreme Inference Engine for Apple Silicon
+  </text>
+
+  <!-- Bottom stats bar -->
+  <g transform="translate(640, 560)">
+    <!-- Separator dots -->
+    <circle cx="-130" cy="-2" r="2" fill="#6c5ce7" opacity="0.5"/>
+    <circle cx="130" cy="-2" r="2" fill="#6c5ce7" opacity="0.5"/>
+
+    <text x="-280" y="0" text-anchor="middle" fill="#8888aa"
+          font-family="SF Mono,Menlo,Consolas,monospace" font-size="16" letter-spacing="1">
+      300B+ parameters
+    </text>
+    <text x="0" y="0" text-anchor="middle" fill="#8888aa"
+          font-family="SF Mono,Menlo,Consolas,monospace" font-size="16" letter-spacing="1">
+      64GB Mac
+    </text>
+    <text x="280" y="0" text-anchor="middle" fill="#8888aa"
+          font-family="SF Mono,Menlo,Consolas,monospace" font-size="16" letter-spacing="1">
+      NVMe as VRAM
+    </text>
+  </g>
+
+  <!-- Kanji accent top-right -->
+  <text x="1230" y="50" text-anchor="end" fill="#6c5ce7" opacity="0.15"
+        font-family="'Hiragino Sans','Noto Sans CJK SC',sans-serif" font-size="36" font-weight="100">
+    !P
+  </text>
+</svg>
