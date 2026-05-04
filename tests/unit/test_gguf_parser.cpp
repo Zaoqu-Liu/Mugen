@@ -391,6 +391,111 @@ static void test_parse_with_array_kv() {
 }
 
 // ---------------------------------------------------------------------------
+// Tests: GGUF parser – empty file
+// ---------------------------------------------------------------------------
+static void test_parse_empty_file() {
+    Buf empty;
+    auto path = write_temp(empty, "empty");
+    auto result = mugen::GGUFParser::parse(path);
+    CHECK(!result.has_value());
+    std::filesystem::remove(path);
+}
+
+// ---------------------------------------------------------------------------
+// Tests: GGUF parser – truncated after tensor descriptors (data missing)
+// ---------------------------------------------------------------------------
+static void test_parse_truncated_data() {
+    // Build a valid header+KV+tensor descriptors, but truncate before tensor data.
+    Buf b;
+    put_u32(b, 0x46554747);  // magic
+    put_u32(b, 3);           // version
+    put_u64(b, 1);           // 1 tensor
+    put_u64(b, 1);           // 1 KV pair
+
+    put_kv_string(b, "general.architecture", "llama");
+
+    // Tensor: F32 [64, 32] = 8192 bytes, offset 0
+    put_tensor_info(b, {"big.weight", {64, 32}, 0, 0});
+
+    pad_to(b, 32);
+    // Do NOT append actual tensor data — file is truncated.
+
+    auto path = write_temp(b, "trunc_data");
+    auto result = mugen::GGUFParser::parse(path);
+    CHECK(!result.has_value());  // tensor extends past EOF
+    std::filesystem::remove(path);
+}
+
+// ---------------------------------------------------------------------------
+// Tests: GGUF parser – excessive tensor count
+// ---------------------------------------------------------------------------
+static void test_parse_huge_tensor_count() {
+    Buf b;
+    put_u32(b, 0x46554747);
+    put_u32(b, 3);
+    put_u64(b, 0xFFFFFFFFFFFFFFULL);  // absurdly large tensor count
+    put_u64(b, 0);                     // 0 KV pairs
+    b.resize(b.size() + 128, 0);       // pad so file isn't too small to read header
+
+    auto path = write_temp(b, "huge_tc");
+    auto result = mugen::GGUFParser::parse(path);
+    CHECK(!result.has_value());
+    std::filesystem::remove(path);
+}
+
+// ---------------------------------------------------------------------------
+// Tests: GGUF parser – illegal magic number variants
+// ---------------------------------------------------------------------------
+static void test_parse_almost_magic() {
+    // One-byte-off magic: "GGUG" (last byte differs)
+    Buf b;
+    put_u32(b, 0x47554747);  // "GUGG" LE
+    put_u32(b, 3);
+    put_u64(b, 0);
+    put_u64(b, 0);
+    b.resize(64, 0);
+
+    auto path = write_temp(b, "almost_magic");
+    auto result = mugen::GGUFParser::parse(path);
+    CHECK(!result.has_value());
+    std::filesystem::remove(path);
+}
+
+// ---------------------------------------------------------------------------
+// Tests: GGUF parser – big-endian byte-swapped version detection
+// ---------------------------------------------------------------------------
+static void test_parse_big_endian_version() {
+    Buf b;
+    put_u32(b, 0x46554747);  // correct magic
+    // Version 3 in big-endian: 0x03000000
+    put_u32(b, 0x03000000);
+    put_u64(b, 0);
+    put_u64(b, 0);
+    b.resize(64, 0);
+
+    auto path = write_temp(b, "big_endian");
+    auto result = mugen::GGUFParser::parse(path);
+    CHECK(!result.has_value());  // "big-endian GGUF files are not supported"
+    std::filesystem::remove(path);
+}
+
+// ---------------------------------------------------------------------------
+// Tests: GGUF parser – tensor_by_name miss
+// ---------------------------------------------------------------------------
+static void test_tensor_by_name_miss() {
+    auto data = build_test_gguf();
+    auto path = write_temp(data, "name_miss");
+
+    auto result = mugen::GGUFParser::parse(path);
+    CHECK(result.has_value());
+
+    CHECK(result->tensor_by_name("nonexistent.tensor") == nullptr);
+    CHECK(result->tensor_by_name("") == nullptr);
+
+    std::filesystem::remove(path);
+}
+
+// ---------------------------------------------------------------------------
 int main() {
     test_ggml_type_sizes();
     test_tensor_byte_size();
@@ -398,6 +503,12 @@ int main() {
     test_moe_expert_tensors();
     test_parse_errors();
     test_parse_with_array_kv();
+    test_parse_empty_file();
+    test_parse_truncated_data();
+    test_parse_huge_tensor_count();
+    test_parse_almost_magic();
+    test_parse_big_endian_version();
+    test_tensor_by_name_miss();
 
     std::printf("All GGUF parser tests passed.\n");
     return 0;

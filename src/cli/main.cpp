@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <chrono>
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -8,6 +9,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <vector>
 
 #include "mugen/mugen.h"
@@ -20,6 +22,8 @@
 #include "model/ggml_types.h"
 #include "core/scheduler/sampling.h"
 #include "model/tokenizer.h"
+#include "server/http_server.h"
+#include "server/api_routes.h"
 
 namespace fs = std::filesystem;
 
@@ -1082,6 +1086,15 @@ static int cmd_bench(const std::string& model_name, const std::string& compare_e
 // Command: serve <model>
 // ---------------------------------------------------------------------------
 
+static mugen::HttpServer* g_cli_server = nullptr;
+
+static void cli_signal_handler(int /*sig*/) {
+    if (g_cli_server) {
+        std::fprintf(stderr, "\nShutting down...\n");
+        g_cli_server->stop();
+    }
+}
+
 static int cmd_serve(const std::string& model, uint16_t port) {
     auto path = resolve_model_path(model);
     if (path.empty()) {
@@ -1090,29 +1103,98 @@ static int cmd_serve(const std::string& model, uint16_t port) {
         return 1;
     }
 
-    auto result = mugen::GGUFParser::parse(path);
-    if (!result) {
-        std::fprintf(stderr, "Error: %s\n", result.error().c_str());
+    std::fprintf(stderr, "Mugen %s — OpenAI-compatible API server\n", mugen::kVersion);
+    std::fprintf(stderr, "Loading model: %s\n", path.c_str());
+
+    auto bundle = load_model_bundle(path);
+    if (!bundle) {
+        std::fprintf(stderr, "Error: %s\n", bundle.error().c_str());
         return 1;
     }
 
-    const auto& meta = result->metadata();
+    auto& transformer = bundle->model;
+    auto& tokenizer = *bundle->tokenizer;
+    const auto& cfg = transformer->config();
+    const auto& meta = bundle->parser->metadata();
 
-    std::printf("Model:  %s\n",
-                meta.name.empty() ? path.stem().c_str() : meta.name.c_str());
-    std::printf("Arch:   %s\n", meta.arch.c_str());
-    std::printf("Server starting on http://127.0.0.1:%u ...\n\n", port);
-    std::printf("Endpoints:\n");
-    std::printf("  POST /v1/chat/completions\n");
-    std::printf("  GET  /v1/models\n");
-    std::printf("  GET  /health\n");
-    std::printf("\n[server not yet implemented]\n");
+    std::string model_name = meta.name.empty()
+        ? path.stem().string() : meta.name;
+
+    std::fprintf(stderr, "Model: %s (%s)\n", model_name.c_str(), meta.arch.c_str());
+    std::fprintf(stderr, "  Layers: %u, Heads: %u, Embed: %u, Vocab: %u\n",
+                 cfg.n_layers, cfg.n_heads, cfg.embed_dim, cfg.vocab_size);
+    std::fprintf(stderr, "  GPU: %s\n", bundle->gpu->device_name().c_str());
+
+    auto find_token = [&](const std::string& text) -> uint32_t {
+        for (uint32_t i = 0; i < tokenizer.vocab_size(); i++) {
+            if (tokenizer.token_to_text(i) == text) return i;
+        }
+        return UINT32_MAX;
+    };
+
+    mugen::InferenceContext ctx;
+    ctx.model = transformer.get();
+    ctx.tokenizer = &tokenizer;
+    ctx.model_name = model_name;
+    ctx.created_at = std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+    ctx.im_start_id = find_token("<|im_start|>");
+    ctx.im_end_id = find_token("<|im_end|>");
+    ctx.has_chatml = (ctx.im_start_id != UINT32_MAX && ctx.im_end_id != UINT32_MAX);
+
+    if (ctx.has_chatml)
+        std::fprintf(stderr, "  ChatML: im_start=%u, im_end=%u\n",
+                     ctx.im_start_id, ctx.im_end_id);
+
+    mugen::HttpServer::Config srv_cfg;
+    srv_cfg.host = "127.0.0.1";
+    srv_cfg.port = port;
+
+    std::fprintf(stderr, "\nBinding to %s:%u\n\n", srv_cfg.host.c_str(), srv_cfg.port);
+    std::fprintf(stderr, "Routes:\n");
+
+    mugen::HttpServer server(srv_cfg);
+    g_cli_server = &server;
+
+    mugen::register_api_routes(server, &ctx);
+
+    std::signal(SIGINT, cli_signal_handler);
+    std::signal(SIGTERM, cli_signal_handler);
+
+    auto result = server.start();
+    if (!result) {
+        std::fprintf(stderr, "\nFailed to start server: %s\n", result.error().c_str());
+        return 1;
+    }
+
+    std::fprintf(stderr, "\nServer listening on http://%s:%u\n",
+                 srv_cfg.host.c_str(), srv_cfg.port);
+    std::fprintf(stderr, "Press Ctrl+C to stop.\n");
+
+    while (server.is_running()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+
+    std::fprintf(stderr, "Server stopped.\n");
+    g_cli_server = nullptr;
     return 0;
 }
 
 // ---------------------------------------------------------------------------
 // Command: pull <url>
 // ---------------------------------------------------------------------------
+
+static auto extract_filename_from_url(const std::string& url) -> std::string {
+    auto pos = url.rfind('/');
+    if (pos == std::string::npos || pos + 1 >= url.size())
+        return "model.gguf";
+    auto name = url.substr(pos + 1);
+    auto query = name.find('?');
+    if (query != std::string::npos)
+        name = name.substr(0, query);
+    if (name.empty()) name = "model.gguf";
+    return name;
+}
 
 static int cmd_pull(const std::string& url) {
     auto dir = models_dir();
@@ -1127,9 +1209,40 @@ static int cmd_pull(const std::string& url) {
         }
     }
 
+    auto filename = extract_filename_from_url(url);
+    auto dest = dir / filename;
+
+    if (fs::exists(dest)) {
+        std::fprintf(stderr, "File already exists: %s\n", dest.c_str());
+        std::fprintf(stderr, "Remove it first with: mugen rm %s\n", dest.stem().c_str());
+        return 1;
+    }
+
     std::printf("Downloading: %s\n", url.c_str());
-    std::printf("Destination: %s\n", dir.c_str());
-    std::printf("\n[download not yet implemented]\n");
+    std::printf("Destination: %s\n", dest.c_str());
+    std::printf("\n");
+
+    // Use curl subprocess (zero C++ dependencies, available on all macOS)
+    std::string cmd = "curl -fSL --progress-bar -o \"" +
+                      dest.string() + "\" \"" + url + "\"";
+
+    int rc = std::system(cmd.c_str());
+    if (rc != 0) {
+        std::fprintf(stderr, "\nError: download failed (curl exit code %d).\n", rc);
+        std::error_code ec;
+        fs::remove(dest, ec);
+        return 1;
+    }
+
+    if (!fs::exists(dest) || fs::file_size(dest) == 0) {
+        std::fprintf(stderr, "\nError: downloaded file is empty or missing.\n");
+        std::error_code ec;
+        fs::remove(dest, ec);
+        return 1;
+    }
+
+    std::printf("\nDone: %s (%s)\n",
+                dest.c_str(), format_bytes(fs::file_size(dest)).c_str());
     return 0;
 }
 

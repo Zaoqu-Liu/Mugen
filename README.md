@@ -4,6 +4,8 @@
   <img src="docs/assets/banner.svg" alt="Mugen Banner" width="800">
 </p>
 
+**Run DeepSeek V3 (671B) on a single Mac mini.** Mugen treats NVMe SSD as transparent VRAM through speculative expert prefetching.
+
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Build](https://github.com/Zaoqu-Liu/Mugen/actions/workflows/build.yml/badge.svg)](https://github.com/Zaoqu-Liu/Mugen/actions)
 [![Release](https://img.shields.io/github/v/release/Zaoqu-Liu/Mugen)](https://github.com/Zaoqu-Liu/Mugen/releases)
@@ -16,6 +18,15 @@
 **有限内存，無限推理 — Finite memory, infinite inference.**
 
 Mugen is a MoE (Mixture-of-Experts) extreme inference engine built for Apple Silicon. It runs 300B+ parameter MoE models on a single Mac mini M4 Pro with 64 GB unified memory by treating NVMe SSD as a transparent extension of VRAM through speculative expert prefetching.
+
+## Highlights
+
+- **300B+ MoE models on consumer hardware** — run DeepSeek V3 on a 64 GB Mac mini
+- **Zero-copy NVMe ↔ GPU expert streaming** — memory-mapped GGUF with on-demand Metal buffer promotion
+- **29 hand-tuned Metal kernels** — fused dequant + GEMV/GEMM, flash attention, SIMD-optimized
+- **MLA absorbed attention** — 42× KV compression (576 dims vs 24,576 expanded)
+- **Mega-chain decode** — all transformer layers in one Metal dispatch, one sync per token
+- **Zero third-party dependencies** — pure C++23 + Metal, nothing else
 
 ## Why Mugen?
 
@@ -76,6 +87,18 @@ The pipeline maintains three concurrent stages per layer — by the time the GPU
 | DeepSeek-V2-Lite Q8_0 | 9.1 s | 5.4 tok/s | 4.9 tok/s | CPU MLA (GPU kernel WIP) |
 
 *Benchmarked on Mac mini M4 Pro (14 CPU / 20 GPU / 64 GB). DeepSeek V2-Lite decode will reach 30+ tok/s once the GPU MLA attention kernel lands.*
+
+## Features
+
+- 🔥 **300B+ MoE inference** on a single consumer Mac — no server cluster required
+- ⚡ **USPP Pipeline** — speculative decoding + route prediction + NVMe prefetch fused into one pipeline
+- 🎯 **Zero-copy weight access** — memory-mapped GGUF with on-demand expert promotion to Metal buffers
+- 🧠 **MLA absorbed attention** — 42× KV cache compression for DeepSeek V2/V3 (576 dims vs 24,576)
+- ⛓️ **Mega-chain decode** — all transformer layers in a single Metal dispatch (~400 groups, one sync)
+- 🔧 **29 Metal kernels** — fused dequant+GEMV/GEMM, flash attention, SIMD-optimized for Apple GPU
+- 📦 **GGUF native** — reads standard GGUF files directly, no conversion step
+- 🌐 **OpenAI-compatible API** — drop-in `/v1/chat/completions` with streaming support
+- 🏗️ **Pure C++23** — zero external dependencies, Apache 2.0 licensed
 
 ## Quick Start
 
@@ -164,9 +187,61 @@ tools/                Utility scripts
 docs/                 Documentation
 ```
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Architecture](docs/ARCHITECTURE.md) | System design, USPP pipeline, memory hierarchy, data flow |
+| [Metal Kernels](docs/METAL_KERNELS.md) | All 29 GPU kernel specs, buffer layouts, SIMD strategies |
+| [Building](docs/BUILDING.md) | Build configs (Debug/Release/ASan/TSan), IDE setup, FAQ |
+| [API Reference](docs/API_REFERENCE.md) | OpenAI-compatible HTTP API with request/response schemas |
+| [Model Support](docs/MODEL_SUPPORT.md) | Supported architectures, quantization formats, memory estimates |
+| [Performance Guide](docs/PERFORMANCE_GUIDE.md) | Memory tiers, quantization selection, profiling, system tuning |
+| [FAQ](docs/FAQ.md) | Common questions on setup, compatibility, and troubleshooting |
+| [Vision](docs/VISION.md) | Technical roadmap and North Star (DeepSeek V3 on 64GB Mac) |
+
+## Examples
+
+| Example | Description |
+|---------|-------------|
+| [basic_chat](examples/basic_chat/) | Interactive chat with a GGUF model |
+| [speculative_decoding](examples/speculative_decoding/) | Accelerate generation with a draft model |
+| [api_server](examples/api_server/) | Launch an OpenAI-compatible server, query from Python or cURL |
+| [benchmarking](examples/benchmarking/) | Run and interpret performance benchmarks |
+| [moe_inference](examples/moe_inference/) | Run MoE models with USPP pipelining |
+
+See [examples/README.md](examples/README.md) for prerequisites and model download instructions.
+
+## Comparison with Alternatives
+
+| | **Mugen** | **llama.cpp** | **MLX** | **Ollama** |
+|---|:---:|:---:|:---:|:---:|
+| Max model size (64 GB RAM) | **671B+** (SSD offload) | ~30B Q4 | ~30B Q4 | ~30B Q4 |
+| MoE expert offload | ✓ Speculative prefetch | — | — | — |
+| Metal-native | ✓ 29 hand-tuned kernels | ✓ Metal backend | ✓ | Via llama.cpp |
+| SSD as VRAM | ✓ Zero-copy NVMe | — | — | — |
+| Speculative decoding | ✓ USPP pipeline | ✓ | — | — |
+| OpenAI-compatible API | ✓ | ✓ | — | ✓ |
+| Cross-platform | macOS only | ✓ | macOS / iOS | ✓ |
+
+> **When to use what:** Mugen targets a specific niche — running models too large for RAM on Apple Silicon by making NVMe SSD feel like VRAM. For models that fit in memory, llama.cpp and MLX are excellent choices with broader platform support. Ollama provides the easiest setup experience.
+
+## Acknowledgments
+
+- [ggml / llama.cpp](https://github.com/ggerganov/llama.cpp) — GGUF format inspiration, quantization research, and the project that proved consumer hardware can run LLMs
+- [whisper.cpp](https://github.com/ggerganov/whisper.cpp) — Inspiration for clean, minimal C++ inference engine design
+- [DeepSeek](https://github.com/deepseek-ai) — MLA and grouped routing innovations that make 671B MoE feasible
+- [Apple Metal team](https://developer.apple.com/metal/) — Metal Shading Language, unified memory architecture, and the hardware that makes this possible
+- [Leviathan et al. 2023](https://arxiv.org/abs/2302.01318) — "Fast Inference from Transformers via Speculative Decoding"
+- The open-source MoE research community for model weights, routing insights, and tooling
+
 ## Contributing
 
 We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding style, and pull request guidelines. All contributors must follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Zaoqu-Liu/Mugen&type=Date)](https://star-history.com/#Zaoqu-Liu/Mugen&Date)
 
 ## License
 

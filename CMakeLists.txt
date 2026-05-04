@@ -27,6 +27,7 @@ option(MUGEN_ENABLE_ASAN  "Enable Address Sanitizer"  OFF)
 option(MUGEN_ENABLE_TSAN  "Enable Thread Sanitizer"   OFF)
 option(MUGEN_BUILD_TESTS  "Build unit tests"           ON)
 option(MUGEN_BUILD_BENCH  "Build benchmarks"           ON)
+option(MUGEN_BUILD_FUZZ   "Build fuzz targets (requires Clang + libFuzzer)" OFF)
 
 # ---------------------------------------------------------------------------
 # Compiler flags

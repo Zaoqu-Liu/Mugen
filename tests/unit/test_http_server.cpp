@@ -376,6 +376,90 @@ static void test_parse_multiple_headers() {
 }
 
 // =========================================================================
+// HTTP edge case tests – malformed / adversarial inputs
+// =========================================================================
+
+static void test_parse_no_method() {
+    // Request line with no spaces at all
+    std::string raw = "GARBAGE\r\n\r\n";
+    auto result = mugen::HttpServer::parse_request(raw);
+    MUGEN_CHECK(!result.has_value());
+    pass("parse_no_method");
+}
+
+static void test_parse_empty_body_with_content_length() {
+    // Content-Length says 100 but no body bytes follow
+    std::string raw =
+        "POST /data HTTP/1.1\r\n"
+        "Content-Length: 100\r\n"
+        "\r\n";
+    auto result = mugen::HttpServer::parse_request(raw);
+    MUGEN_CHECK(result.has_value());
+    // Parser should cope gracefully — body may be empty or partial
+    MUGEN_CHECK(result->body.size() < 100);
+    pass("parse_empty_body_with_content_length");
+}
+
+static void test_parse_overlong_header_value() {
+    // A single header value of 32 KB
+    std::string long_val(32768, 'X');
+    std::string raw =
+        "GET /test HTTP/1.1\r\n"
+        "X-Big: " + long_val + "\r\n"
+        "\r\n";
+    auto result = mugen::HttpServer::parse_request(raw);
+    MUGEN_CHECK(result.has_value());
+    MUGEN_CHECK_EQ(result->headers["x-big"], long_val);
+    pass("parse_overlong_header_value");
+}
+
+static void test_parse_zero_chunk() {
+    // Chunked encoding with only the terminating zero-chunk
+    std::string raw =
+        "POST /upload HTTP/1.1\r\n"
+        "Transfer-Encoding: chunked\r\n"
+        "\r\n"
+        "0\r\n"
+        "\r\n";
+    auto result = mugen::HttpServer::parse_request(raw);
+    MUGEN_CHECK(result.has_value());
+    MUGEN_CHECK(result->body.empty());
+    pass("parse_zero_chunk");
+}
+
+static void test_parse_binary_body() {
+    // Body contains NUL bytes and other binary data
+    std::string body;
+    body.resize(64);
+    for (int i = 0; i < 64; ++i) body[i] = static_cast<char>(i);
+
+    std::string raw =
+        "POST /binary HTTP/1.1\r\n"
+        "Content-Length: " + std::to_string(body.size()) + "\r\n"
+        "\r\n" + body;
+
+    auto result = mugen::HttpServer::parse_request(raw);
+    MUGEN_CHECK(result.has_value());
+    MUGEN_CHECK(result->body.size() == 64);
+    MUGEN_CHECK(result->body[0] == '\0');
+    pass("parse_binary_body");
+}
+
+static void test_format_response_custom_headers() {
+    mugen::HttpServer::Response resp;
+    resp.status = 201;
+    resp.body = "created";
+    resp.content_type = "text/plain";
+    resp.headers["X-Request-Id"] = "abc-123";
+
+    auto formatted = mugen::HttpServer::format_response(resp);
+    MUGEN_CHECK(formatted.find("HTTP/1.1 201") != std::string::npos);
+    MUGEN_CHECK(formatted.find("X-Request-Id: abc-123") != std::string::npos);
+    MUGEN_CHECK(formatted.find("Content-Type: text/plain") != std::string::npos);
+    pass("format_response_custom_headers");
+}
+
+// =========================================================================
 // main
 // =========================================================================
 
@@ -418,6 +502,14 @@ int main() {
     std::printf("=== HTTP header edge case tests ===\n");
     test_parse_case_insensitive_headers();
     test_parse_multiple_headers();
+
+    std::printf("=== HTTP edge case tests ===\n");
+    test_parse_no_method();
+    test_parse_empty_body_with_content_length();
+    test_parse_overlong_header_value();
+    test_parse_zero_chunk();
+    test_parse_binary_body();
+    test_format_response_custom_headers();
 
     std::printf("\nAll %d tests passed.\n", tests_passed);
     return 0;
