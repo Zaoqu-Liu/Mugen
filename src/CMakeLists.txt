@@ -52,7 +52,7 @@ set_source_files_properties(
     PROPERTIES COMPILE_FLAGS "-fobjc-arc"
 )
 
-target_link_libraries(mugen-cli PRIVATE mugen-core)
+target_link_libraries(mugen-cli PRIVATE mugen-core mugen-server-lib)
 
 if(TARGET mugen-metallib)
     add_dependencies(mugen-cli mugen-metallib)
