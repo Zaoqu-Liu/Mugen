@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <defs>
+    <linearGradient id="b-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d0d1a"/>
+      <stop offset="50%" stop-color="#141428"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <linearGradient id="b-icon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a3f8f"/>
+      <stop offset="50%" stop-color="#6c5ce7"/>
+      <stop offset="100%" stop-color="#a29bfe"/>
+    </linearGradient>
+    <linearGradient id="b-text" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e8e8f8"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+    <radialGradient id="b-glow" cx="30%" cy="50%" r="35%">
+      <stop offset="0%" stop-color="#6c5ce7" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#6c5ce7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="b-line" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6c5ce7" stop-opacity="0"/>
+      <stop offset="20%" stop-color="#6c5ce7" stop-opacity="0.25"/>
+      <stop offset="80%" stop-color="#6c5ce7" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#6c5ce7" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="200" rx="8" fill="url(#b-bg)"/>
+
+  <!-- Ambient glow -->
+  <rect width="800" height="200" rx="8" fill="url(#b-glow)"/>
+
+  <!-- Subtle grid -->
+  <g opacity="0.035" stroke="#6c5ce7" stroke-width="0.5">
+    <line x1="0" y1="50" x2="800" y2="50"/>
+    <line x1="0" y1="100" x2="800" y2="100"/>
+    <line x1="0" y1="150" x2="800" y2="150"/>
+    <line x1="200" y1="0" x2="200" y2="200"/>
+    <line x1="400" y1="0" x2="400" y2="200"/>
+    <line x1="600" y1="0" x2="600" y2="200"/>
+  </g>
+
+  <!-- ===== INFINITY-CHIP ICON ===== -->
+  <g transform="translate(130, 82) scale(2.2)">
+    <path d="M0,-1 C12,-22 34,-22 34,-1 C34,20 12,22 0,1 C-12,22 -34,20 -34,-1 C-34,-22 -12,-22 0,-1Z"
+          fill="none" stroke="url(#b-icon)" stroke-width="2.8" stroke-linejoin="round"/>
+    <rect x="-5.5" y="-5.5" width="11" height="11" rx="1.8" fill="url(#b-icon)"/>
+    <rect x="-3" y="-3" width="6" height="6" rx="0.8" fill="none" stroke="#a29bfe" stroke-width="0.5" opacity="0.7"/>
+    <line x1="5.5" y1="-2" x2="15" y2="-8" stroke="#6c5ce7" stroke-width="0.8" opacity="0.5"/>
+    <line x1="5.5" y1="2" x2="15" y2="8" stroke="#6c5ce7" stroke-width="0.8" opacity="0.5"/>
+    <line x1="-5.5" y1="-2" x2="-15" y2="-8" stroke="#6c5ce7" stroke-width="0.8" opacity="0.5"/>
+    <line x1="-5.5" y1="2" x2="-15" y2="8" stroke="#6c5ce7" stroke-width="0.8" opacity="0.5"/>
+    <circle cx="17" cy="-9" r="1.6" fill="#a29bfe"/>
+    <circle cx="17" cy="9" r="1.6" fill="#a29bfe"/>
+    <circle cx="-17" cy="-9" r="1.6" fill="#a29bfe"/>
+    <circle cx="-17" cy="9" r="1.6" fill="#a29bfe"/>
+    <circle cx="29" cy="-3.5" r="1.1" fill="#6c5ce7" opacity="0.6"/>
+    <circle cx="29" cy="3.5" r="1.1" fill="#6c5ce7" opacity="0.6"/>
+    <circle cx="-29" cy="-3.5" r="1.1" fill="#6c5ce7" opacity="0.6"/>
+    <circle cx="-29" cy="3.5" r="1.1" fill="#6c5ce7" opacity="0.6"/>
+  </g>
+
+  <!-- ===== MUGEN WORDMARK ===== -->
+  <g fill="url(#b-text)" transform="translate(310, 62) scale(0.82)">
+    <!-- M -->
+    <path d="M0,0 L0,42 L3,42 L3,8 L12,28 L14,28 L23,8 L23,42 L26,42 L26,0 L23,0 L13,22 L3,0 Z"/>
+    <!-- U -->
+    <path d="M34,0 L34,30 C34,37 38,42.5 45,42.5 C52,42.5 56,37 56,30 L56,0 L53,0 L53,30 C53,35.5 50,39.5 45,39.5 C40,39.5 37,35.5 37,30 L37,0 Z"/>
+    <!-- G -->
+    <path d="M76,8 C73.5,3 69,0 64,0 C58,0 54,5 54,14 L54,28 C54,37 58,42.5 64,42.5 C69,42.5 74,39.5 76,35 L76,22 L66,22 L66,25 L73,25 L73,34 C71.5,37.5 68,39.5 64,39.5 C60,39.5 57,36 57,28 L57,14.5 C57,7 59.5,3 64,3 C68,3 71.5,5 73.5,9 Z" transform="translate(10,0)"/>
+    <!-- E -->
+    <path d="M92,0 L92,42 L112,42 L112,39 L95,39 L95,22.5 L109,22.5 L109,19.5 L95,19.5 L95,3 L112,3 L112,0 Z"/>
+    <!-- N -->
+    <path d="M118,42 L118,0 L121,0 L142,35 L142,0 L145,0 L145,42 L142,42 L121,7 L121,42 Z"/>
+  </g>
+
+  <!-- Tagline -->
+  <text x="310" y="116" fill="#a29bfe" opacity="0.8"
+        font-family="Helvetica Neue,Helvetica,Arial,sans-serif" font-size="15" font-weight="300" letter-spacing="1.5">
+    Finite memory, infinite inference.
+  </text>
+
+  <!-- Bottom accent line -->
+  <rect x="0" y="170" width="800" height="1" fill="url(#b-line)"/>
+
+  <!-- Bottom micro text -->
+  <text x="400" y="186" text-anchor="middle" fill="#6c5ce7" opacity="0.35"
+        font-family="SF Mono,Menlo,Consolas,monospace" font-size="10" letter-spacing="2">
+    C++23 + Metal  "  MoE Extreme Inference  "  Apple Silicon
+  </text>
+</svg>
