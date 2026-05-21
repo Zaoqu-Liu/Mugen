@@ -1,100 +1,51 @@
-# ──────────────────────────────────────────────────────────────
-# Nightly — sanitizers + benchmarks, runs daily at UTC 00:00
-# Also supports manual dispatch for ad-hoc runs.
-# ──────────────────────────────────────────────────────────────
 name: Nightly
 
 on:
   schedule:
-    - cron: '0 0 * * *'    # UTC 00:00 every day
-  workflow_dispatch:         # manual trigger
-
-concurrency:
-  group: nightly
-  cancel-in-progress: true
+    - cron: '0 2 * * *' # 凌晨 2:00 UTC ≈ 10:00 CST
+  workflow_dispatch:
 
 jobs:
-  # ── Address Sanitizer ───────────────────────────────────────
   asan:
     name: ASan
     runs-on: macos-15
-    timeout-minutes: 60
-
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
-      - name: Configure (ASan)
-        run: |
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DMUGEN_ENABLE_ASAN=ON \
-            -DMUGEN_BUILD_TESTS=ON \
-            -DMUGEN_BUILD_BENCH=OFF
-
+      - name: Configure
+        run: cmake -B build/asan -DCMAKE_BUILD_TYPE=Release -DMUGEN_ENABLE_ASAN=ON
       - name: Build
-        run: cmake --build build -j$(sysctl -n hw.ncpu)
+        run: cmake --build build/asan -j$(sysctl -n hw.ncpu)
+      - name: Test
+        run: ctest --test-dir build/asan --output-on-failure
 
-      - name: Test (ASan)
-        run: ctest --test-dir build --output-on-failure
-
-  # ── Thread Sanitizer ────────────────────────────────────────
   tsan:
     name: TSan
     runs-on: macos-15
-    timeout-minutes: 60
-
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
-      - name: Configure (TSan)
-        run: |
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DMUGEN_ENABLE_TSAN=ON \
-            -DMUGEN_BUILD_TESTS=ON \
-            -DMUGEN_BUILD_BENCH=OFF
-
+      - name: Configure
+        run: cmake -B build/tsan -DCMAKE_BUILD_TYPE=Release -DMUGEN_ENABLE_TSAN=ON
       - name: Build
-        run: cmake --build build -j$(sysctl -n hw.ncpu)
+        run: cmake --build build/tsan -j$(sysctl -n hw.ncpu)
+      - name: Test
+        run: ctest --test-dir build/tsan --output-on-failure
 
-      - name: Test (TSan)
-        run: ctest --test-dir build --output-on-failure
-
-  # ── Benchmarks ──────────────────────────────────────────────
-  bench:
+  benchmark:
     name: Benchmark
     runs-on: macos-15
-    timeout-minutes: 60
-
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
-      - name: Configure (Bench)
-        run: |
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DMUGEN_BUILD_TESTS=OFF \
-            -DMUGEN_BUILD_BENCH=ON
-
+      - name: Configure
+        run: cmake -B build/bench -DCMAKE_BUILD_TYPE=Release
       - name: Build
-        run: cmake --build build -j$(sysctl -n hw.ncpu)
-
-      - name: Run benchmarks
+        run: cmake --build build/bench --target mugen-bench -j$(sysctl -n hw.ncpu)
+      - name: Run benchmarks (quick)
         run: |
-          BENCH_BIN=$(find build -name 'mugen-bench' -type f | head -1)
-          if [ -n "$BENCH_BIN" ]; then
-            "$BENCH_BIN" --benchmark_format=json > bench-results.json 2>&1 || true
-            "$BENCH_BIN" | tee bench-results.txt || true
+          if [ -f build/bench/src/mugen-bench ]; then
+            ./build/bench/src/mugen-bench --quick 2>&1 || true
           else
-            echo "::warning::mugen-bench binary not found — skipping."
-            echo "No benchmark binary found" > bench-results.txt
+            echo "Bench executable not found"
           fi
-
-      - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
-        with:
-          name: bench-${{ github.run_number }}-${{ github.sha }}
-          path: |
-            bench-results.json
-            bench-results.txt
-          retention-days: 90

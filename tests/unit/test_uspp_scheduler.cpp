@@ -212,23 +212,32 @@ static void test_stop_terminates_generation() {
 
     mugen::InferenceRequest req;
     req.prompt_tokens = {1};
-    req.max_new_tokens = 1000000;
+    req.max_new_tokens = 100000;
 
     std::atomic<bool> done{false};
     std::vector<mugen::TokenResult> output;
 
+    // Use the callback to trigger a stop after a small number of tokens,
+    // rather than relying on a sleep race that breaks under sanitizers.
+    uint32_t stop_after = 50;
     std::thread gen_thread([&] {
-        auto res = ptr->generate(req, nullptr);
-        if (res.has_value()) output = std::move(*res);
+        auto res = ptr->generate(req, [&](const mugen::TokenResult& t) {
+            output.push_back(t);
+            if (output.size() >= stop_after) {
+                ptr->stop();
+            }
+        });
         done.store(true);
     });
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    ptr->stop();
     gen_thread.join();
 
     CHECK(done.load());
-    CHECK(output.size() <= req.max_new_tokens);
+    // stop() should have been called before generation completed
+    CHECK(output.size() < req.max_new_tokens);
+    // Verify we got at least stop_after tokens before stop took effect
+    // (the in-flight speculative batch may overshoot a bit).
+    CHECK(output.size() >= stop_after);
 
     std::printf("  stop_terminates_generation (%zu tokens before stop) PASS\n",
                 output.size());
